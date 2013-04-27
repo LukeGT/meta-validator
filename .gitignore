@@ -1,0 +1,9 @@
+# Do not include node_modules, let users install it themselves via npm update.
+node_modules/
+
+# Ignore any IntelliJ IDEA files/folders
+*.iml
+.idea/
+
+# Ignore any npm debug logs
+npm-debug.log
