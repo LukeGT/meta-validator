@@ -133,4 +133,41 @@ exports.testAdditionParameterOverOptional = (test) ->
   test.ok verifyPairInvalid(pairs)
   test.done()
 
-#TODO: Nested objects
+exports.testNestedObjectsPass = (test) ->
+  pairs =
+    def:
+      person:
+        name:
+          first: 'string'
+          middle: 'string'
+          last: 'string'
+        age: 'number'
+    obj:
+      person:
+        name:
+          first: 'Luke'
+          middle: 'George'
+          last: 'Tsekouras'
+        age: 21
+  test.ok verifyPairValid(pairs)
+  test.done()
+
+exports.testNestedObjectInvalid = (test) ->
+  pairs =
+    def:
+      person:
+        name:
+          first: 'string'
+          middle: 'string'
+          last: 'string'
+        age: 'number'
+    obj:
+      person:
+        name:
+          first: 'Luke'
+          middle: 2
+          last: 'Tsekouras'
+        age: 21
+
+  test.ok verifyPairInvalid(pairs)
+  test.done()
