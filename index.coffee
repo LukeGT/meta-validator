@@ -14,6 +14,15 @@
 #     id: 'number'
 #     value: 'string'
 #   ]
+#   listOfEnumeratedObjects: [
+#     [ 'left', 'right', 'up', 'down' ]
+#   ]
+#   listOfNumbers: [
+#     'number'
+#   ]
+#   listOfCustomValidatedStrings: [
+#     (s) -> s.length < 10
+#   ]
 #   nestedObjects:
 #     a: 
 #       value: 'string'
@@ -52,20 +61,27 @@
     # Handle Arrays
     else if test instanceof Array
 
-      # Array contains meta-data
-      if test[0] instanceof Object
+      # Array contains enumeration
+      if test.length > 0
+        unless value in test
+          errors.push "#{prequel}property '#{key}' must be one of: #{test.join ', '}"
+
+      else
 
         unless value instanceof Array
           errors.push "#{prequel}property '#{key}' must be an Array, but was instead of type '#{value?.constructor.name}'"
 
-        for v, i in value
-          @verify test[0], v, errors, "#{prequel}within property '#{key}' (index #{i}), "
+        # Array contains meta-data
+        if test[0]?.constructor.name == 'Object'
 
-      # Array contains enumeration
-      else
-        
-        unless value in test
-          errors.push "#{prequel}property '#{key}' must be one of: #{test.join ', '}"
+          for v, i in value
+            @verify test[0], v, errors, "#{prequel}within property '#{key}' (index #{i}), "
+
+        # Array contains validation data
+        else if test.length
+
+          for v, i in value
+            @verify {val: test[0]}, {val: v}, errors, "#{prequel}within property '#{key}' (index #{i}), "
 
     # Custom function check
     else if typeof test == 'function'
