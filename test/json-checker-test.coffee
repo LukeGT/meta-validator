@@ -50,7 +50,6 @@ exports.testNumberWithString = (test) ->
   test.ok verifyPairInvalid(pair)
   test.done()
 
-# TODO: Find out whether decimals should pass?
 exports.testNumberWithDecimal = (test) ->
   pair = createPair 'number', 4.5
 
@@ -171,3 +170,73 @@ exports.testNestedObjectInvalid = (test) ->
 
   test.ok verifyPairInvalid(pairs)
   test.done()
+
+exports.testNestedObjectsOptionalIncluded = (test) ->
+  pairs =
+    def:
+      person:
+        $_name:
+          first: 'string'
+          $_middle: 'string'
+          last: 'string'
+        age: 'number'
+    obj:
+      person:
+        name:
+          first: 'Luke'
+          middle: 'George'
+          last: 'Tsekouras'
+        age: 21
+  test.ok verifyPairValid(pairs)
+  test.done();
+
+exports.testNestedObjectCanIgnoreOptional = (test) ->
+  pairs =
+    def:
+      person:
+        $_name:
+          first: 'string'
+          $_middle: 'string'
+          last: 'string'
+        age: 'number'
+    obj:
+      person:
+        name:
+          first: 'Luke'
+          last: 'Tsekouras'
+        age: 21
+  test.ok verifyPairValid(pairs)
+  test.done();
+
+exports.testNestedObjectOptionalParentSkipped = (test) ->
+  pairs =
+    def:
+      person:
+        $_name:
+          first: 'string'
+          $_middle: 'string'
+          last: 'string'
+        age: 'number'
+    obj:
+      person:
+        age: 21
+  test.ok verifyPairValid(pairs)
+  test.done();
+
+exports.testNestedObjectChildRequiredMissing = (test) ->
+  pairs =
+    def:
+      person:
+        $_name:
+          first: 'string'
+          $_middle: 'string'
+          last: 'string'
+        age: 'number'
+    obj:
+      person:
+        name:
+          middle: 'George'
+          last: 'Tsekouras'
+        age: 21
+  test.ok verifyPairInvalid(pairs)
+  test.done();
