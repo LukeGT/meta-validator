@@ -132,6 +132,61 @@ exports.testAdditionParameterOverOptional = (test) ->
   test.ok verifyPairInvalid(pairs)
   test.done()
 
+exports.testListOfObjects = (test) ->
+  pairs =
+    def:
+      people: [
+        name: 'string'
+        age: 'number'
+      ]
+    obj:
+      people: [
+        name: 'Bob'
+        age: 23
+      ,
+        name: 'Fred'
+        age: 53
+      ,
+        name: 'Jack'
+        age: 15
+      ]
+  test.ok verifyPairValid(pairs)
+  test.done()
+
+exports.testNegativeItemInObjectList = (test) ->
+  pairs =
+    def:
+      people: [
+        name: 'string'
+        age: 'number'
+      ]
+    obj:
+      people: [
+        name: 'Bob'
+        age: 23
+      ,
+        name: 'Fred'
+        age: 'N/A'
+      ,
+        name: 'Jack'
+        age: 15
+      ]
+  test.ok verifyPairInvalid(pairs)
+  test.done()
+
+exports.testNegativeObjectList = (test) ->
+  pairs =
+  def:
+    people: [
+      name: 'string'
+      age: 'number'
+    ]
+  obj:
+    people: '[ name: "bob", age: 23 ]'
+  test.ok verifyPairInvalid(pairs)
+  test.done()
+
+
 exports.testNestedObjectsPass = (test) ->
   pairs =
     def:
