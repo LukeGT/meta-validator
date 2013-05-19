@@ -1,6 +1,10 @@
 # Do not include node_modules, let users install it themselves via npm update.
 node_modules/
 
+# Ignore coffeescript compilation artifacts
+*.js
+*.map
+
 # Ignore any IntelliJ IDEA files/folders
 *.iml
 .idea/
