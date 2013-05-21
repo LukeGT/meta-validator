@@ -62,11 +62,11 @@
     else if test instanceof Array
 
       # Array contains enumeration
-      if test.length > 0
+      if test.length > 1
         unless value in test
           errors.push "#{prequel}property '#{key}' must be one of: #{test.join ', '}"
 
-      else
+      else if test.length == 1
 
         unless value instanceof Array
           errors.push "#{prequel}property '#{key}' must be an Array, but was instead of type '#{value?.constructor.name}'"
