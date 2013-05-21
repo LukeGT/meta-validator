@@ -1,9 +1,9 @@
 {
-  "name": "json-checker",
+  "name": "meta-validator",
   "version": "0.0.1",
   "private": true,
 
-  "dependencies": {
+  "devDependencies": {
     "nodeunit": "*",
     "coffee-script": "*"
   }
