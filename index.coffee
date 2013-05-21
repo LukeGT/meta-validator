@@ -32,74 +32,61 @@
 #       compulsoryIfAboveIncluded: 'string'
 # }
 
-@verify = (def, object, errors = [], prequel = '') ->
-  
-  # Go through each property present and validate it
-  for key, value of object
+@verify = (def, value, errors = [], prequel = '') ->
 
-    [optional, key] = key.match( /^(\$_)?(.*)$/ )[1..]
+  # Check if there's a definition
+  if !def
 
-    test = def[key] ? def["$_#{key}"]
+    errors.push prequel + ' is not permitted'
 
-    # Check if there's a definition
-    if !test?
+  # Check a regex
+  else if def instanceof RegExp
 
-      errors.push "#{prequel}property '#{key}' is not permitted"
+    unless def.test value
+      errors.push prequel + " must match the regular expression #{def}"
 
-    # Check a regex
-    else if test instanceof RegExp
-      
-      unless value.match? test
-        errors.push "#{prequel}property '#{key}' must match the regular expression #{test}"
-    
-    # Check a data type
-    else if typeof test == 'string' or test instanceof String
+  # Check a data type
+  else if typeof def == 'string' or def instanceof String
 
-      unless ( typeof global[test] == 'function' and value instanceof global[test] ) or typeof value == test
-        errors.push "#{prequel}property '#{key}' must be of type '#{test}', but was instead value '#{value}' of type '#{value?.constructor.name}'"
-        
-    # Handle Arrays
-    else if test instanceof Array
+    unless ( typeof global[def] == 'function' and value instanceof global[def] ) or typeof value == def
+      errors.push prequel + " must be of type '#{def}', but was instead value '#{value}' of type '#{value?.constructor.name}'"
 
-      # Array contains enumeration
-      if test.length > 1
-        unless value in test
-          errors.push "#{prequel}property '#{key}' must be one of: #{test.join ', '}"
+  # Handle Arrays
+  else if def instanceof Array
 
-      else if test.length == 1
+    # Array contains enumeration
+    if def.length > 1
+      unless value in def
+        errors.push prequel + " must be one of: #{ def.join ', ' }"
 
-        unless value instanceof Array
-          errors.push "#{prequel}property '#{key}' must be an Array, but was instead of type '#{value?.constructor.name}'"
+    # Array contains array-of validation
+    else if def.length == 1
 
-        # Array contains meta-data
-        if test[0]?.constructor.name == 'Object'
+      unless value instanceof Array
+        errors.push prequel + " must be an Array, but was instead of type '#{value?.constructor.name}'"
+      else
+        for v, i in value
+          @verify def[0], v, errors, prequel + "[#{i}]"
 
-          for v, i in value
-            @verify test[0], v, errors, "#{prequel}within property '#{key}' (index #{i}), "
+  # Custom function check
+  else if typeof def == 'function'
 
-        # Array contains validation data
-        else if test.length
+    unless def value
+      errors.push prequel + ' did not pass validation'
 
-          for v, i in value
-            @verify {val: test[0]}, {val: v}, errors, "#{prequel}within property '#{key}' (index #{i}), "
+  # Object structure check
+  else if typeof def == "object"
 
-    # Custom function check
-    else if typeof test == 'function'
+    # Go through each property present and validate it
+    for key, propValue of value
+      @verify def[key] ? def["$_#{key}"], propValue, errors, prequel + "#{ if prequel then "." else "" }#{key}"
 
-      unless test value
-        errors.push "#{prequel}property '#{key}' did not pass validation"
+    # Check that all expected properties existed
+    for key of def
 
-    # Check an object
-    else if test instanceof Object
-      
-      @verify test, value, errors, "#{prequel}within property '#{key}', "
+      [optional, key] = key.match( /^(\$_)?(.*)$/ )[1..]
 
-  # Check that all expected properties existed
-  for key, value of def
-
-    [optional, key] = key.match( /^(\$_)?(.*)$/ )[1..]
-
-    unless object[key]? or optional?
-      errors.push "#{prequel}property '#{key}' is mandatory"
+      unless value[key]? or optional?
+        errors.push prequel + "#{ if prequel then "." else "" }#{key} is mandatory"
 
   return if errors.length then errors else null

@@ -22,12 +22,14 @@ createTwoPairsWithFields = (field1, type1, value1, field2, type2, value2) ->
     pairs.obj[field2] = value2
   return pairs
 
-verifyPairValid = (pair) ->
+verifyPairValid = (test, pair) ->
   res = jsonChecker.verify pair.def, pair.obj
-  res == null
+  test.ok res == null, res, 'Unexpected errors encountered'
 
-verifyPairInvalid = (pair) ->
-  !verifyPairValid(pair)
+verifyPairInvalid = (test, pair, num) ->
+  res = jsonChecker.verify pair.def, pair.obj
+  test.ok res != null, res, 'Expected errors, but received none'
+  test.equal res.length, num, "Invalid number of errors. Expected #{num} but got #{res.length}"
 
 ##
 # Number tests
@@ -35,25 +37,25 @@ verifyPairInvalid = (pair) ->
 exports.testNumberWithPositiveNumber = (test) ->
   pair = createPair 'number', 4
 
-  test.ok verifyPairValid(pair)
+  verifyPairValid(test, pair)
   test.done()
 
 exports.testNumberWithNegativeNumber = (test) ->
   pair = createPair 'number', -4
 
-  test.ok verifyPairValid(pair)
+  verifyPairValid(test, pair)
   test.done()
 
 exports.testNumberWithString = (test) ->
   pair = createPair 'number', 'four'
 
-  test.ok verifyPairInvalid(pair)
+  verifyPairInvalid(test, pair, 1)
   test.done()
 
 exports.testNumberWithDecimal = (test) ->
   pair = createPair 'number', 4.5
 
-  test.ok verifyPairValid(pair)
+  verifyPairValid(test, pair)
   test.done()
 
 ##
@@ -62,12 +64,12 @@ exports.testNumberWithDecimal = (test) ->
 exports.testStringWithString = (test) ->
   pair = createPair 'string', 'Valid string'
 
-  test.ok verifyPairValid(pair)
+  verifyPairValid(test, pair)
   test.done()
 
 exports.testStringWithNumber = (test) ->
   pair = createPair 'string', 4
-  test.ok verifyPairInvalid(pair)
+  verifyPairInvalid(test, pair, 1)
   test.done()
 
 ##
@@ -75,12 +77,12 @@ exports.testStringWithNumber = (test) ->
 ##
 exports.testCustomFunctionSuccessfulMatch = (test) ->
   pair = createPair ((s) -> s == s.toUpperCase()), 'YEAH BUDDY'
-  test.ok verifyPairValid(pair)
+  verifyPairValid(test, pair)
   test.done()
 
 exports.testCustomFunctionUnsuccessfulMatch = (test) ->
   pair = createPair ((s) -> s == s.toUpperCase()), 'not ALL caps'
-  test.ok verifyPairInvalid(pair)
+  verifyPairInvalid(test, pair, 1)
   test.done()
 
 
@@ -89,47 +91,47 @@ exports.testCustomFunctionUnsuccessfulMatch = (test) ->
 ##
 exports.testRegexSuccessfulMatch = (test) ->
   pair = createPair /[0-9]+\.[0-9]+/, '1232.23'
-  test.ok verifyPairValid(pair)
+  verifyPairValid(test, pair)
   test.done()
 
 exports.testRegexUnsuccessfulMatch = (test) ->
   pair = createPair /[0-9]+\.[0-9]+/, 'sad face'
-  test.ok verifyPairInvalid(pair)
+  verifyPairInvalid(test, pair, 1)
   test.done()
 
 exports.testEnumerationSuccessfulMatch = (test) ->
   pair = createPair ['Yes', 'No'], 'Yes'
-  test.ok verifyPairValid(pair)
+  verifyPairValid(test, pair)
   test.done()
 
 exports.testEnumerationUnsuccessfulMatch = (test) ->
   pair = createPair ['Yes', 'No'], 'asdf'
-  test.ok verifyPairInvalid(pair)
+  verifyPairInvalid(test, pair, 1)
   test.done()
 
 exports.testNecessaryParametersMissing = (test) ->
   pairs = createTwoPairs 'number', 4, 'string'
-  test.ok verifyPairInvalid(pairs)
+  verifyPairInvalid(test, pairs, 1)
   test.done()
 
 exports.testOptionalParametersLeftOut = (test) ->
   pairs = createTwoPairsWithFields 'id', 'number', 4, '$_name', 'string'
 
-  test.ok verifyPairValid(pairs)
+  verifyPairValid(test, pairs)
   test.done()
 
 exports.testAdditionalParametersIsInvalid = (test) ->
   pairs = createPair 'number', 4
   pairs.obj.extraField = 'Bob'
 
-  test.ok verifyPairInvalid(pairs)
+  verifyPairInvalid(test, pairs, 1)
   test.done()
 
 exports.testAdditionParameterOverOptional = (test) ->
   pairs = createTwoPairs('number', 4, '$_name')
   pairs.obj.extraField = 'Bob'
 
-  test.ok verifyPairInvalid(pairs)
+  verifyPairInvalid(test, pairs, 2)
   test.done()
 
 exports.testListOfObjects = (test) ->
@@ -150,7 +152,7 @@ exports.testListOfObjects = (test) ->
         name: 'Jack'
         age: 15
       ]
-  test.ok verifyPairValid(pairs)
+  verifyPairValid(test, pairs)
   test.done()
 
 exports.testNegativeItemInObjectList = (test) ->
@@ -171,19 +173,19 @@ exports.testNegativeItemInObjectList = (test) ->
         name: 'Jack'
         age: 15
       ]
-  test.ok verifyPairInvalid(pairs)
+  verifyPairInvalid(test, pairs, 1)
   test.done()
 
 exports.testNegativeObjectList = (test) ->
   pairs =
-  def:
-    people: [
-      name: 'string'
-      age: 'number'
-    ]
-  obj:
-    people: '[ name: "bob", age: 23 ]'
-  test.ok verifyPairInvalid(pairs)
+    def:
+      people: [
+        name: 'string'
+        age: 'number'
+      ]
+    obj:
+      people: '[ name: "bob", age: 23 ]'
+  verifyPairInvalid(test, pairs, 1)
   test.done()
 
 
@@ -203,7 +205,7 @@ exports.testNestedObjectsPass = (test) ->
           middle: 'George'
           last: 'Tsekouras'
         age: 21
-  test.ok verifyPairValid(pairs)
+  verifyPairValid(test, pairs)
   test.done()
 
 exports.testNestedObjectInvalid = (test) ->
@@ -223,7 +225,7 @@ exports.testNestedObjectInvalid = (test) ->
           last: 'Tsekouras'
         age: 21
 
-  test.ok verifyPairInvalid(pairs)
+  verifyPairInvalid(test, pairs, 1)
   test.done()
 
 exports.testNestedObjectsOptionalIncluded = (test) ->
@@ -242,7 +244,7 @@ exports.testNestedObjectsOptionalIncluded = (test) ->
           middle: 'George'
           last: 'Tsekouras'
         age: 21
-  test.ok verifyPairValid(pairs)
+  verifyPairValid(test, pairs)
   test.done();
 
 exports.testNestedObjectCanIgnoreOptional = (test) ->
@@ -260,7 +262,7 @@ exports.testNestedObjectCanIgnoreOptional = (test) ->
           first: 'Luke'
           last: 'Tsekouras'
         age: 21
-  test.ok verifyPairValid(pairs)
+  verifyPairValid(test, pairs)
   test.done();
 
 exports.testNestedObjectOptionalParentSkipped = (test) ->
@@ -275,7 +277,7 @@ exports.testNestedObjectOptionalParentSkipped = (test) ->
     obj:
       person:
         age: 21
-  test.ok verifyPairValid(pairs)
+  verifyPairValid(test, pairs)
   test.done();
 
 exports.testNestedObjectChildRequiredMissing = (test) ->
@@ -293,5 +295,34 @@ exports.testNestedObjectChildRequiredMissing = (test) ->
           middle: 'George'
           last: 'Tsekouras'
         age: 21
-  test.ok verifyPairInvalid(pairs)
+  verifyPairInvalid(test, pairs, 1)
   test.done();
+
+exports.testSingleValueValid = (test) ->
+  pair =
+    def: 'string'
+    obj: 'test string'
+  verifyPairValid(test, pair)
+  test.done()
+
+
+exports.testSingleValueInvalid = (test) ->
+  pair =
+    def: 'number'
+    obj: 'test string'
+  verifyPairInvalid(test, pair, 1)
+  test.done()
+
+exports.testArrayValueValid = (test) ->
+  pair =
+    def: [ 'string' ]
+    obj: [ 'one', 'two', 'three' ]
+  verifyPairValid(test, pair)
+  test.done()
+
+exports.testArrayValueInvalid = (test) ->
+  pair =
+    def: [ 'number' ]
+    obj: [ 'one', 'two', 'three' ]
+  verifyPairInvalid(test, pair, 3)
+  test.done()
