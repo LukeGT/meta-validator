@@ -1,3 +1,38 @@
+validator = require 'validator'
+Q = require 'q'
+
+#
+# Wraps around the node-validator check suite so that a series of checks can be lined up and then later executed on a
+# number of different inputs.
+#
+class NodeValidatorWrapper
+
+  constructor: ->
+
+    @_funcs = []
+
+    for name of validator.validators
+      @[name] = do (name) -> (args...) ->
+        @_funcs.push (check) ->
+          check[name](args...)
+        return @
+
+  _check: (args...) ->
+
+    try
+      check = validator.check(args...)
+      for func in @_funcs
+        check = func(check)
+      return true
+
+    catch e
+      return e.message
+
+#
+# Returns a NodeValidatorWrapper, ready to help define a chain of node-validator checks
+#
+@check = -> new NodeValidatorWrapper()
+
 #
 # Validate JSON objects by creating a meta object defining the criteria for validity
 # By default, all declarations are mandatory, but they can be made optional by prepending the property with $_ (see below)
@@ -31,8 +66,8 @@
 #     $_optionalPart:
 #       compulsoryIfAboveIncluded: 'string'
 # }
-
-@verify = (def, value, errors = [], prequel = '') ->
+#
+@validate = (def, value, errors = [], prequel = '') ->
 
   # Check if there's a definition
   if !def
@@ -66,7 +101,7 @@
         errors.push prequel + " must be an Array, but was instead of type '#{value?.constructor.name}'"
       else
         for v, i in value
-          @verify def[0], v, errors, prequel + "[#{i}]"
+          @validate def[0], v, errors, prequel + "[#{i}]"
 
   # Custom function check
   else if typeof def == 'function'
@@ -79,7 +114,7 @@
 
     # Go through each property present and validate it
     for key, propValue of value
-      @verify def[key] ? def["$_#{key}"], propValue, errors, prequel + "#{ if prequel then "." else "" }#{key}"
+      @validate def[key] ? def["$_#{key}"], propValue, errors, prequel + "#{ if prequel then "." else "" }#{key}"
 
     # Check that all expected properties existed
     for key of def

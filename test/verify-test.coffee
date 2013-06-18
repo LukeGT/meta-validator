@@ -1,4 +1,4 @@
-jsonChecker = require '../index.coffee'
+meta = require '../index.coffee'
 
 ##
 # Helper functions
@@ -23,11 +23,11 @@ createTwoPairsWithFields = (field1, type1, value1, field2, type2, value2) ->
   return pairs
 
 verifyPairValid = (test, pair) ->
-  res = jsonChecker.verify pair.def, pair.obj
+  res = meta.validate pair.def, pair.obj
   test.ok res == null, res, 'Unexpected errors encountered'
 
 verifyPairInvalid = (test, pair, num) ->
-  res = jsonChecker.verify pair.def, pair.obj
+  res = meta.validate pair.def, pair.obj
   test.ok res != null, res, 'Expected errors, but received none'
   test.equal res.length, num, "Invalid number of errors. Expected #{num} but got #{res.length}"
 

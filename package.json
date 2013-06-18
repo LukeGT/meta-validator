@@ -2,9 +2,12 @@
   "name": "meta-validator",
   "version": "0.0.1",
   "private": true,
-
   "devDependencies": {
     "nodeunit": "*",
     "coffee-script": "*"
+  },
+  "dependencies": {
+    "validator": "~1.2.0",
+    "q": "~0.9.6"
   }
 }
